@@ -433,6 +433,21 @@ d3.pathSankey = function() {
     else labelspace.right = _;
     return chart;
   };
+  chart.nodeYSpacing = function(_) {
+    if (!arguments.length) return nodeYSpacing;
+    else nodeYSpacing = _;
+    return chart;
+  };
+  chart.nodeGroupYSpacing = function(_) {
+    if (!arguments.length) return nodeGroupYSpacing;
+    else nodeGroupYSpacing = _;
+    return chart;
+  };
+  chart.nodeGroupYPadding = function(_) {
+    if (!arguments.length) return nodeGroupYPadding;
+    else nodeGroupYPadding = _;
+    return chart;
+  };
 
   return chart;
 };
