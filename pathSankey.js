@@ -308,6 +308,11 @@ d3.pathSankey = function() {
 
       nodeGroups.exit().remove();
 
+      var tip = d3.tip().attr('class', 'd3-tip')
+          .direction('e')
+          .html(function(d) { return d.title; });
+      parent.call(tip);
+
       var flowElements = parent.selectAll("path.flow").data(flowAreasData);
       flowElements.enter().append("path").attr("class", prop("class"));
 
@@ -359,7 +364,7 @@ d3.pathSankey = function() {
       }
 
       function mouseoverNode(d) {
-        
+        tip.show(d);
         if (currentlyActive && currentlyActive.id == d.uniqueId) {
           return;
         }
@@ -367,6 +372,7 @@ d3.pathSankey = function() {
       }
 
       function mouseoutNode(d) {
+        tip.hide(d);
         if (currentlyActive && currentlyActive.id == d.uniqueId) {
           return;
         }
