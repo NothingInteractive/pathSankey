@@ -32,7 +32,7 @@ d3.pathSankey = function() {
   }
 
   var width, height; // total width including padding
-  var onNodeSelected, onNodeDeselected; // callbacks
+  var onNodeSelected, onNodeDeselected, onGroupSelected, onGroupDeselected; // callbacks
   var labelspace = {top:50,left:30,right:30,bottom:0}; // padding around actual sankey
   var selectedNodeAddress = null;
 
@@ -52,7 +52,8 @@ d3.pathSankey = function() {
 
       var parent = d3.select(this);
       var yscale; // not a d3.scale, just a number
-      var currentlyActive = null; // node
+      var currentlyActiveNode = null;
+      var currentlyActiveGroup = null;
 
       var availableWidth = width - (labelspace.right+labelspace.left);
       var availableHeight = height - (labelspace.top + labelspace.bottom);
@@ -331,20 +332,20 @@ d3.pathSankey = function() {
         var node_id = d.uniqueId;
         var theflows, thenode;
 
-        if (currentlyActive) {
+        if (currentlyActiveNode) {
           
-          if (onNodeDeselected) onNodeDeselected(currentlyActive.d);
+          if (onNodeDeselected) onNodeDeselected(currentlyActiveNode.d);
 
-          theflows = parent.selectAll(".passes-"+currentlyActive.id);
-          thenode = parent.selectAll(".node-"+currentlyActive.id);
+          theflows = parent.selectAll(".passes-"+currentlyActiveNode.id);
+          thenode = parent.selectAll(".node-"+currentlyActiveNode.id);
 
           theflows
             .style("fill", null)
             .style("fill-opacity", null);
 
 
-          if (currentlyActive.id == node_id) {
-            currentlyActive = selectedNodeAddress = null;
+          if (currentlyActiveNode.id == node_id) {
+            currentlyActiveNode = selectedNodeAddress = null;
             return;
           }
         }
@@ -358,14 +359,60 @@ d3.pathSankey = function() {
           .style("fill-opacity", 1.0); 
 
         thenode.style("fill", d.color);
-        currentlyActive = {"id": node_id, "d": d};
+        currentlyActiveNode = {"id": node_id, "d": d};
         selectedNodeAddress = node_id.split("-").map(function(d){return parseInt(d);});
         if (onNodeSelected) onNodeSelected(d);        
       }
 
+      function activateNodeGroup(d) {
+          // Defining the group ID based on the node ID
+          var nodeId = d.uniqueId;
+          var groupIdMatches = nodeId.match(/(\d+-\d+)-\d+/);
+
+          // We need a match to activate a group
+          if (groupIdMatches.length <= 1) {
+            return;
+          }
+
+          var groupId = groupIdMatches[1];
+
+          var allFlows = parent.selectAll('*[class*=passes]');
+
+          if (currentlyActiveGroup && currentlyActiveGroup.id === groupId) {
+              if (onGroupDeselected) onGroupDeselected(currentlyActiveGroup.activatingNode);
+
+              allFlows
+                  .style('fill', null)
+                  .style('fill-opacity', null);
+
+              currentlyActiveGroup = undefined;
+              selectedNodeAddress = undefined;
+          }
+          else {
+              // Decreasing opacity of all nodes
+              allFlows
+                  .style('fill', null)
+                  .style('fill-opacity', 0.04);
+
+              // Highlighting the matching paths
+              parent.selectAll('*[class*=passes-' + groupId + ']')
+                  .style('fill', d.color)
+                  .style('fill-opacity', 1);
+
+              currentlyActiveGroup = {
+                  id: groupId,
+                  activatingNode: d
+              };
+
+              selectedNodeAddress = nodeId.split("-").map(function(d){return parseInt(d);});
+              if (onGroupSelected) onGroupSelected(d);
+          }
+
+      }
+
       function mouseoverNode(d) {
         tip.show(d);
-        if (currentlyActive && currentlyActive.id == d.uniqueId) {
+        if (currentlyActiveNode && currentlyActiveNode.id == d.uniqueId) {
           return;
         }
         d3.select(this).style("fill", d.color.brighter());
@@ -373,7 +420,7 @@ d3.pathSankey = function() {
 
       function mouseoutNode(d) {
         tip.hide(d);
-        if (currentlyActive && currentlyActive.id == d.uniqueId) {
+        if (currentlyActiveNode && currentlyActiveNode.id == d.uniqueId) {
           return;
         }
         d3.select(this).style("fill", d.color);
@@ -389,14 +436,14 @@ d3.pathSankey = function() {
         .style("fill", function(d){return d.color;})
         .on("mouseover", mouseoverNode)
         .on("mouseout", mouseoutNode)
-        .on("click", activateNode);
+        .on("click", activateNodeGroup);
       nodeElements.exit().remove();
       
       if (selectedNodeAddress) {
         var node = data.nodes[selectedNodeAddress[0]]
                           .items[selectedNodeAddress[1]]
                           .items[selectedNodeAddress[2]];
-        activateNode(node);
+        activateNodeGroup(node);
       }        
     }); // selection.each()
   }
@@ -422,6 +469,16 @@ d3.pathSankey = function() {
   chart.onNodeDeselected = function(_) {
     if (!arguments.length) return onNodeDeselected;
     else onNodeDeselected = _;
+    return chart;
+  };
+  chart.onGroupSelected = function(_) {
+    if (!arguments.length) return onGroupSelected;
+    else onGroupSelected = _;
+    return chart;
+  };
+  chart.onGroupDeselected = function(_) {
+    if (!arguments.length) return onGroupDeselected;
+    else onGroupDeselected = _;
     return chart;
   };
   chart.selectedNodeAddress = function(_) {
