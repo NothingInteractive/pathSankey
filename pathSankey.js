@@ -238,8 +238,13 @@ d3.pathSankey = function() {
                       {x: target.x-flowStartWidth, y0: targetY0, y1: targetY1},
                       {x: target.x, y0: targetY0, y1: targetY1},
                     ],
-              class: ["flow", flow.extraClasses].join(" ")
-              });
+              class: [
+                  "flow",
+                  flow.extraClasses,
+                  'from-' + from[0] + '-' + from[1] + '-' + from[2],
+                  'to-' + to[0] + '-' + to[1] + '-' + to[2]
+              ].join(" ")
+            });
 
             flow.path.shift();
           });
@@ -396,7 +401,18 @@ d3.pathSankey = function() {
 
               // Highlighting the matching paths
               parent.selectAll('*[class*=passes-' + groupId + ']')
-                  .style('fill', d.color)
+                  .style('fill', function() {
+                      var originNodeMatcher = this.className.baseVal.match(/from-(\d+)-(\d+)-(\d+)/);
+                      if (originNodeMatcher.length > 1) {
+                          var originNode = data.nodes[originNodeMatcher[1]]
+                              .items[originNodeMatcher[2]]
+                              .items[originNodeMatcher[3]];
+                          return originNode.color;
+                      }
+                      else {
+                          return d.color;
+                      }
+                  })
                   .style('fill-opacity', 1);
 
               currentlyActiveGroup = {
