@@ -413,7 +413,7 @@ d3.pathSankey = function() {
                           return d.color;
                       }
                   })
-                  .style('fill-opacity', 1);
+                  .style('fill-opacity', 0.8);
 
               currentlyActiveGroup = {
                   id: groupId,
