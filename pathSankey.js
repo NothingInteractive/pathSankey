@@ -149,7 +149,7 @@ d3.pathSankey = function() {
                 yscale = d3.min(nodes, function(d) {
                     return (availableHeight
                         - d.numGroupSpacings * nodeGroupYSpacing
-                        - d.items.length * nodeGroupYPadding * 2
+                        - d.items.filter(function(group) { return group.items.length > 0}).length * nodeGroupYPadding * 2
                         - d.numNodeSpacings * nodeYSpacing) / d.size;
                 });
 
@@ -157,7 +157,7 @@ d3.pathSankey = function() {
                 nodes.forEach(function(layer) {
                     layer.totalHeight = layer.size * yscale
                         + layer.numGroupSpacings * nodeGroupYSpacing
-                        + layer.items.length * nodeGroupYPadding * 2
+                        + layer.items.filter(function(group) { return group.items.length > 0}).length * nodeGroupYPadding * 2
                         + layer.numNodeSpacings * nodeYSpacing;
                 });
 
@@ -170,6 +170,11 @@ d3.pathSankey = function() {
 
                         group.x = labelspace.left + (availableWidth - nodeWidth) * layer.x;
                         group.y = y;
+
+                        if (group.items.length === 0) {
+                            return;
+                        }
+
                         y += nodeGroupYPadding;
 
                         // Sorting nodes by group of target
@@ -352,6 +357,9 @@ d3.pathSankey = function() {
                 return d.y + 0.5 * d.height;
             };
             nodeGroups.selectAll('g.node-group > g > path')
+                .filter(function(d) {
+                    return d.items.length > 0;
+                })
                 .attr('d', function(d) {
                     return d3.svg.line()([
                         [nodeGroupLabelx(d) + groupLabelDistance * d.label, d.y + nodeGroupYPadding],
@@ -360,6 +368,9 @@ d3.pathSankey = function() {
                 });
 
             nodeGroups.selectAll('g.node-group > g > text')
+                .filter(function(d) {
+                    return d.items.length > 0;
+                })
                 .attr('text-anchor', function(d) {
                     return d.label === -1 ? 'end' : 'start';
                 })
