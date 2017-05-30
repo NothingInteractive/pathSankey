@@ -334,17 +334,10 @@ d3.pathSankey = function() {
             var nodeGroups = nodeLayers.selectAll('g.node-group').data(prop('items'));
             var enteringNodeGroups = nodeGroups.enter().append('g').classed('node-group', true);
 
-            enteringNodeGroups.append('rect').classed('node-group', true);
             var enteringNodeGroupsG = enteringNodeGroups.append('g').attr('class', 'node-group-label');
 
             enteringNodeGroupsG.append('path');
             enteringNodeGroupsG.append('text');
-
-            nodeGroups.selectAll('g.node-group > rect')
-                .attr('x', prop('x'))
-                .attr('y', prop('y'))
-                .attr('width', nodeWidth)
-                .attr('height', prop('height'));
 
             nodeGroups.selectAll('g.node-group > g')
                 .style('display', function(d) {
@@ -384,7 +377,7 @@ d3.pathSankey = function() {
             var tip = d3.tip().attr('class', 'd3-tip')
                 .direction('e')
                 .html(function(d) {
-                    return d.title;
+                    return d.size + ' in ' + d.title;
                 });
             parent.call(tip);
 
@@ -508,19 +501,33 @@ d3.pathSankey = function() {
             }
 
             function mouseoverNode(d) {
-                tip.show(d);
-                if (currentlyActiveNode && currentlyActiveNode.id === d.uniqueId) {
-                    return;
-                }
-                d3.selectAll('*[class*=node-' + d.layerIdx + '-' + d.groupIdx + ']').style('fill', d.color.brighter());
             }
 
             function mouseoutNode(d) {
-                tip.hide(d);
-                if (currentlyActiveNode && currentlyActiveNode.id === d.uniqueId) {
+            }
+
+            function mouseoverGroup(d) {
+                tip.show(d);
+                var groupId = d.items[0].layerIdx + '-' + d.items[0].groupIdx;
+                if (currentlyActiveGroup && currentlyActiveGroup.id === groupId) {
                     return;
                 }
-                d3.selectAll('*[class*=node-' + d.layerIdx + '-' + d.groupIdx + ']').style('fill', d.color);
+                d3.selectAll('*[class*=node-' + groupId + ']')
+                    .style('fill', function(node) {
+                        return node.color.brighter(0.5)
+                    });
+            }
+
+            function mouseoutGroup(d) {
+                tip.hide(d);
+                var groupId = d.items[0].layerIdx + '-' + d.items[0].groupIdx;
+                if (currentlyActiveGroup && currentlyActiveGroup.id === groupId) {
+                    return;
+                }
+                d3.selectAll('*[class*=node-' + groupId + ']')
+                    .style('fill', function(node) {
+                        return node.color;
+                    });
             }
 
             var nodeElements = nodeGroups.selectAll('rect.node').data(prop('items'));
@@ -539,6 +546,18 @@ d3.pathSankey = function() {
                 .on('mouseout', mouseoutNode)
                 .on('click', activateNodeGroup);
             nodeElements.exit().remove();
+
+            nodeGroups.append('rect').classed('node-group', true);
+
+            nodeGroups.selectAll('g.node-group > rect')
+                .attr('x', prop('x'))
+                .attr('y', prop('y'))
+                .attr('width', nodeWidth)
+                .attr('height', prop('height'));
+
+            d3.selectAll('g.node-group')
+                .on('mouseover', mouseoverGroup)
+                .on('mouseout', mouseoutGroup);
 
             if (selectedNodeAddress) {
                 var node = data.nodes[selectedNodeAddress[0]]
