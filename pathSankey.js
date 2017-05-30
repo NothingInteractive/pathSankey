@@ -512,7 +512,7 @@ d3.pathSankey = function() {
                 if (currentlyActiveNode && currentlyActiveNode.id === d.uniqueId) {
                     return;
                 }
-                d3.select(this).style('fill', d.color.brighter());
+                d3.selectAll('*[class*=node-' + d.layerIdx + '-' + d.groupIdx + ']').style('fill', d.color.brighter());
             }
 
             function mouseoutNode(d) {
@@ -520,7 +520,7 @@ d3.pathSankey = function() {
                 if (currentlyActiveNode && currentlyActiveNode.id === d.uniqueId) {
                     return;
                 }
-                d3.select(this).style('fill', d.color);
+                d3.selectAll('*[class*=node-' + d.layerIdx + '-' + d.groupIdx + ']').style('fill', d.color);
             }
 
             var nodeElements = nodeGroups.selectAll('rect.node').data(prop('items'));
