@@ -454,7 +454,13 @@ d3.pathSankey = function() {
 
                 var allFlows = parent.selectAll('*[class*=passes]');
 
-                if (currentlyActiveGroup && currentlyActiveGroup.id === uniqueGroupId) {
+                //De-highlight nodes of group
+                d3.selectAll('*[class*=node-' + uniqueGroupId + ']')
+                    .style('fill', function(node) {
+                        return node.color;
+                    });
+
+                if (currentlyActiveGroup && currentlyActiveGroup.id === uniqueGroupId) { // Deactivating
                     if (onGroupDeselected) {
                         onGroupDeselected(d);
                     }
@@ -466,7 +472,7 @@ d3.pathSankey = function() {
                     currentlyActiveGroup = undefined;
                     selectedNodeAddress = undefined;
                 }
-                else {
+                else { // Activating
                     // Decreasing opacity of all nodes
                     allFlows
                         .style('fill', null)
