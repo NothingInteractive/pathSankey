@@ -448,23 +448,15 @@ d3.pathSankey = function() {
                 }
             }
 
-            function activateNodeGroup(d) {
-                // Defining the group ID based on the node ID
-                var nodeId = d.uniqueId;
-                var groupIdMatches = nodeId.match(/(\d+-\d+)-\d+/);
-
-                // We need a match to activate a group
-                if (groupIdMatches.length <= 1) {
-                    return;
-                }
-
-                var groupId = groupIdMatches[1];
+            function activateGroup(d) {
+                // Taking layer and group information from first node as it is the same for every node in the group.
+                var uniqueGroupId = d.items[0].layerIdx + '-' + d.items[0].groupIdx;
 
                 var allFlows = parent.selectAll('*[class*=passes]');
 
-                if (currentlyActiveGroup && currentlyActiveGroup.id === groupId) {
+                if (currentlyActiveGroup && currentlyActiveGroup.id === uniqueGroupId) {
                     if (onGroupDeselected) {
-                        onGroupDeselected(currentlyActiveGroup.activatingNode);
+                        onGroupDeselected(d);
                     }
 
                     allFlows
@@ -481,7 +473,7 @@ d3.pathSankey = function() {
                         .style('fill-opacity', 0.04);
 
                     // Highlighting the matching paths
-                    parent.selectAll('*[class*=passes-' + groupId + ']')
+                    parent.selectAll('*[class*=passes-' + uniqueGroupId + ']')
                         .style('fill', function() {
                             var originNodeMatcher = this.className.baseVal.match(/from-(\d+)-(\d+)-(\d+)/);
                             if (originNodeMatcher.length > 1) {
@@ -497,13 +489,9 @@ d3.pathSankey = function() {
                         .style('fill-opacity', 0.8);
 
                     currentlyActiveGroup = {
-                        id: groupId,
-                        activatingNode: d
+                        id: uniqueGroupId
                     };
 
-                    selectedNodeAddress = nodeId.split('-').map(function(d) {
-                        return parseInt(d);
-                    });
                     if (onGroupSelected) {
                         onGroupSelected(d);
                     }
@@ -519,11 +507,12 @@ d3.pathSankey = function() {
 
             function mouseoverGroup(d) {
                 tip.show(d);
-                var groupId = d.items[0].layerIdx + '-' + d.items[0].groupIdx;
-                if (currentlyActiveGroup && currentlyActiveGroup.id === groupId) {
+                // Taking layer and group information from first node as it is the same for every node in the group.
+                var uniqueGroupId = d.items[0].layerIdx + '-' + d.items[0].groupIdx;
+                if (currentlyActiveGroup && currentlyActiveGroup.id === uniqueGroupId) {
                     return;
                 }
-                d3.selectAll('*[class*=node-' + groupId + ']')
+                d3.selectAll('*[class*=node-' + uniqueGroupId + ']')
                     .style('fill', function(node) {
                         return node.color.brighter(0.5)
                     });
@@ -531,11 +520,12 @@ d3.pathSankey = function() {
 
             function mouseoutGroup(d) {
                 tip.hide(d);
-                var groupId = d.items[0].layerIdx + '-' + d.items[0].groupIdx;
-                if (currentlyActiveGroup && currentlyActiveGroup.id === groupId) {
+                // Taking layer and group information from first node as it is the same for every node in the group.
+                var uniqueGroupId = d.items[0].layerIdx + '-' + d.items[0].groupIdx;
+                if (currentlyActiveGroup && currentlyActiveGroup.id === uniqueGroupId) {
                     return;
                 }
-                d3.selectAll('*[class*=node-' + groupId + ']')
+                d3.selectAll('*[class*=node-' + uniqueGroupId + ']')
                     .style('fill', function(node) {
                         return node.color;
                     });
@@ -555,7 +545,7 @@ d3.pathSankey = function() {
                 })
                 .on('mouseover', mouseoverNode)
                 .on('mouseout', mouseoutNode)
-                .on('click', activateNodeGroup);
+                .on('click', activateNode);
             nodeElements.exit().remove();
 
             nodeGroups.append('rect').classed('node-group', true);
@@ -568,13 +558,14 @@ d3.pathSankey = function() {
 
             d3.selectAll('g.node-group')
                 .on('mouseover', mouseoverGroup)
-                .on('mouseout', mouseoutGroup);
+                .on('mouseout', mouseoutGroup)
+                .on('click', activateGroup);
 
             if (selectedNodeAddress) {
                 var node = data.nodes[selectedNodeAddress[0]]
                     .items[selectedNodeAddress[1]]
                     .items[selectedNodeAddress[2]];
-                activateNodeGroup(node);
+                activateNode(node);
             }
         }); // selection.each()
     }
