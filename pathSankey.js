@@ -46,6 +46,8 @@ d3.pathSankey = function() {
     var groupLabelDistance = 5;
     var flowStartWidth = 20; // flows go horizontally for this distance before curving
 
+    var tooltipDirection = 'e';
+
     function chart(selection) {
 
         selection.each(function(data) {
@@ -101,7 +103,8 @@ d3.pathSankey = function() {
                         node.nodeIdx = p[2];
                         node.uniqueId = [node.layerIdx, node.groupIdx, node.nodeIdx].join('-');
 
-                        if (i > 0) {
+                        // We also give a sizeIn if we have only one column, in order to have a size
+                        if (i > 0 || flow.path.length === 1) {
                             layer.sizeIn += flow.magnitude;
                             nodeGroup.sizeIn += flow.magnitude;
                             node.sizeIn += flow.magnitude;
@@ -386,7 +389,7 @@ d3.pathSankey = function() {
             nodeGroups.exit().remove();
 
             var tip = d3.tip().attr('class', 'd3-tip')
-                .direction('e')
+                .direction(tooltipDirection)
                 .html(function(d) {
                     return d.size + ' in ' + d.title;
                 });
@@ -682,6 +685,15 @@ d3.pathSankey = function() {
         }
         else {
             nodeGroupYPadding = _;
+        }
+        return chart;
+    };
+    chart.tooltipDirection = function(_) {
+        if (!arguments.length) {
+            return tooltipDirection;
+        }
+        else {
+            tooltipDirection = _;
         }
         return chart;
     };
