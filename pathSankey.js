@@ -185,12 +185,14 @@ d3.pathSankey = function() {
 
                         y += nodeGroupYPadding;
 
-                        // Sorting nodes by group of target
+                        // Sorting nodes by group of source/target
                         // The `concat()` is to make a copy of the array so that the order stays by nodeIdx otherwise
                         var sortedItems = group.items.concat().sort(function(a, b) {
-                            if (a.target && b.target) {
-                                if (a.target.groupIdx - b.target.groupIdx !== 0) {
-                                    return a.target.groupIdx - b.target.groupIdx;
+                            var sortByType = 'target'; // 'source' or 'target'
+
+                            if (a[sortByType] && b[sortByType]) {
+                                if (a[sortByType].groupIdx - b[sortByType].groupIdx !== 0) {
+                                    return a[sortByType].groupIdx - b[sortByType].groupIdx;
                                 }
                                 else
                                     return a.nodeIdx - b.nodeIdx;
