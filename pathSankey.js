@@ -48,6 +48,11 @@ d3.pathSankey = function() {
 
     var tooltipDirection = 'e';
 
+    // Functions that are going to be declared within the chart, but accessible from the outside to interact with it.
+    var activateNodeByAddress;
+    var highlightNodeByAddress;
+    var resetAllNodes;
+
     function chart(selection) {
 
         selection.each(function(data) {
@@ -408,10 +413,56 @@ d3.pathSankey = function() {
                         .interpolate('basis'));
             flowElements.exit().remove();
 
+            function highlightFlows(selector) {
+                parent.selectAll(selector)
+                    .style('fill', function() {
+                        var originNodeMatcher = this.className.baseVal.match(/from-(\d+)-(\d+)-(\d+)/);
+                        if (originNodeMatcher.length > 1) {
+                            var originNode = data.nodes[originNodeMatcher[1]]
+                                .items[originNodeMatcher[2]]
+                                .items[originNodeMatcher[3]];
+                            return originNode.color;
+                        }
+                        else {
+                            return d.color;
+                        }
+                    })
+                    .style('fill-opacity', 0.8);
+            }
 
+            function resetFlowsAppearance(selector) {
+                parent.selectAll(selector)
+                    .style('fill', null)
+                    .style('fill-opacity', null);
+            }
+
+            function fadeFlows(selector) {
+                parent.selectAll(selector)
+                    .style('fill', null)
+                    .style('fill-opacity', 0.04);
+            }
+
+            function highlightNodes(selector) {
+                parent.selectAll(selector)
+                    .style('fill', function(node) {
+                        return node.color.brighter(0.5);
+                    });
+            }
+
+            function resetNodesAppearance(selector) {
+                parent.selectAll(selector)
+                    .style('fill', function(node) {
+                        return node.color;
+                    });
+            }
+
+
+            /**
+             * Highlight all the flows going through the given node
+             * @param d
+             */
             function activateNode(d) {
                 var node_id = d.uniqueId;
-                var theflows, thenode;
 
                 if (currentlyActiveNode) {
 
@@ -419,13 +470,7 @@ d3.pathSankey = function() {
                         onNodeDeselected(currentlyActiveNode.d);
                     }
 
-                    theflows = parent.selectAll('.passes-' + currentlyActiveNode.id);
-                    thenode = parent.selectAll('.node-' + currentlyActiveNode.id);
-
-                    theflows
-                        .style('fill', null)
-                        .style('fill-opacity', null);
-
+                    resetFlowsAppearance('.passes-' + currentlyActiveNode.id);
 
                     if (currentlyActiveNode.id === node_id) {
                         currentlyActiveNode = selectedNodeAddress = null;
@@ -433,15 +478,10 @@ d3.pathSankey = function() {
                     }
                 }
 
+                fadeFlows('*[class*=passes]');
+                highlightFlows('.passes-' + node_id);
+                resetNodesAppearance('.node-' + node_id);
 
-                theflows = parent.selectAll('.passes-' + node_id);
-                thenode = parent.selectAll('.node-' + node_id);
-
-                theflows.transition()
-                    .style('fill', d.color)
-                    .style('fill-opacity', 1.0);
-
-                thenode.style('fill', d.color);
                 currentlyActiveNode = {'id': node_id, 'd': d};
                 selectedNodeAddress = node_id.split('-').map(function(d) {
                     return parseInt(d);
@@ -451,52 +491,48 @@ d3.pathSankey = function() {
                 }
             }
 
+            activateNodeByAddress = function(nodeAddress) {
+                selectedNodeAddress = nodeAddress;
+                var node = data.nodes[selectedNodeAddress[0]]
+                    .items[selectedNodeAddress[1]]
+                    .items[selectedNodeAddress[2]];
+                activateNode(node);
+            };
+
+            highlightNodeByAddress = function(nodeAddress) {
+                selectedNodeAddress = nodeAddress;
+                var node = data.nodes[selectedNodeAddress[0]]
+                    .items[selectedNodeAddress[1]]
+                    .items[selectedNodeAddress[2]];
+                highlightNodes('.node-' + node.uniqueId);
+            };
+
+            resetAllNodes = function() {
+                resetNodesAppearance('*[class*=node]');
+            };
+
+            /**
+             * Highlight all the flows going through the given group
+             * @param d
+             */
             function activateGroup(d) {
                 // Taking layer and group information from first node as it is the same for every node in the group.
                 var uniqueGroupId = d.items[0].layerIdx + '-' + d.items[0].groupIdx;
-
-                var allFlows = parent.selectAll('*[class*=passes]');
-
-                //De-highlight nodes of group
-                parent.selectAll('*[class*=node-' + uniqueGroupId + ']')
-                    .style('fill', function(node) {
-                        return node.color;
-                    });
 
                 if (currentlyActiveGroup && currentlyActiveGroup.id === uniqueGroupId) { // Deactivating
                     if (onGroupDeselected) {
                         onGroupDeselected(d);
                     }
 
-                    allFlows
-                        .style('fill', null)
-                        .style('fill-opacity', null);
+                    resetFlowsAppearance('*[class*=passes]');
 
                     currentlyActiveGroup = undefined;
                     selectedNodeAddress = undefined;
                 }
                 else { // Activating
-                    // Decreasing opacity of all nodes
-                    allFlows
-                        .style('fill', null)
-                        .style('fill-opacity', 0.04);
-
-                    // Highlighting the matching paths
-                    parent.selectAll('*[class*=passes-' + uniqueGroupId + ']')
-                        .style('fill', function() {
-                            var originNodeMatcher = this.className.baseVal.match(/from-(\d+)-(\d+)-(\d+)/);
-                            if (originNodeMatcher.length > 1) {
-                                var originNode = data.nodes[originNodeMatcher[1]]
-                                    .items[originNodeMatcher[2]]
-                                    .items[originNodeMatcher[3]];
-                                return originNode.color;
-                            }
-                            else {
-                                return d.color;
-                            }
-                        })
-                        .style('fill-opacity', 0.8);
-
+                    fadeFlows('*[class*=passes]');
+                    highlightFlows('*[class*=passes-' + uniqueGroupId + ']');
+                    resetNodesAppearance('*[class*=node-' + uniqueGroupId + ']');
                     currentlyActiveGroup = {
                         id: uniqueGroupId
                     };
@@ -505,7 +541,6 @@ d3.pathSankey = function() {
                         onGroupSelected(d);
                     }
                 }
-
             }
 
             function mouseoverNode(d) {
@@ -521,10 +556,7 @@ d3.pathSankey = function() {
                 if (currentlyActiveGroup && currentlyActiveGroup.id === uniqueGroupId) {
                     return;
                 }
-                parent.selectAll('*[class*=node-' + uniqueGroupId + ']')
-                    .style('fill', function(node) {
-                        return node.color.brighter(0.5)
-                    });
+                highlightNodes('*[class*=node-' + uniqueGroupId + ']');
             }
 
             function mouseoutGroup(d) {
@@ -534,10 +566,7 @@ d3.pathSankey = function() {
                 if (currentlyActiveGroup && currentlyActiveGroup.id === uniqueGroupId) {
                     return;
                 }
-                parent.selectAll('*[class*=node-' + uniqueGroupId + ']')
-                    .style('fill', function(node) {
-                        return node.color;
-                    });
+                resetNodesAppearance('*[class*=node-' + uniqueGroupId + ']');
             }
 
             var nodeElements = nodeGroups.selectAll('rect.node').data(prop('items'));
@@ -554,7 +583,7 @@ d3.pathSankey = function() {
                 })
                 .on('mouseover', mouseoverNode)
                 .on('mouseout', mouseoutNode)
-                .on('click', activateNode);
+                .on('click', activateNode); // But it cannot be clicked because the group is over it.
             nodeElements.exit().remove();
 
             nodeGroups.append('rect').classed('node-group', true);
@@ -696,6 +725,26 @@ d3.pathSankey = function() {
             tooltipDirection = _;
         }
         return chart;
+    };
+
+    chart.activateNodeByAddress = function(_) {
+        if (!arguments.length) {
+            return activateNodeByAddress;
+        }
+        else {
+            return activateNodeByAddress(_);
+        }
+    };
+    chart.highlightNodeByAddress = function(_) {
+        if (!arguments.length) {
+            return highlightNodeByAddress;
+        }
+        else {
+            return highlightNodeByAddress(_);
+        }
+    };
+    chart.resetAllNodes = function(_) {
+        return resetAllNodes();
     };
 
     return chart;
