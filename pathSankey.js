@@ -458,7 +458,7 @@ d3.pathSankey = function() {
                 var allFlows = parent.selectAll('*[class*=passes]');
 
                 //De-highlight nodes of group
-                d3.selectAll('*[class*=node-' + uniqueGroupId + ']')
+                parent.selectAll('*[class*=node-' + uniqueGroupId + ']')
                     .style('fill', function(node) {
                         return node.color;
                     });
@@ -521,7 +521,7 @@ d3.pathSankey = function() {
                 if (currentlyActiveGroup && currentlyActiveGroup.id === uniqueGroupId) {
                     return;
                 }
-                d3.selectAll('*[class*=node-' + uniqueGroupId + ']')
+                parent.selectAll('*[class*=node-' + uniqueGroupId + ']')
                     .style('fill', function(node) {
                         return node.color.brighter(0.5)
                     });
@@ -534,7 +534,7 @@ d3.pathSankey = function() {
                 if (currentlyActiveGroup && currentlyActiveGroup.id === uniqueGroupId) {
                     return;
                 }
-                d3.selectAll('*[class*=node-' + uniqueGroupId + ']')
+                parent.selectAll('*[class*=node-' + uniqueGroupId + ']')
                     .style('fill', function(node) {
                         return node.color;
                     });
@@ -565,7 +565,7 @@ d3.pathSankey = function() {
                 .attr('width', nodeWidth)
                 .attr('height', prop('height'));
 
-            d3.selectAll('g.node-group')
+            parent.selectAll('g.node-group')
                 .on('mouseover', mouseoverGroup)
                 .on('mouseout', mouseoutGroup)
                 .on('click', activateGroup);
