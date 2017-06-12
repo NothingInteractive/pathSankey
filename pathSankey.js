@@ -52,6 +52,7 @@ d3.pathSankey = function() {
     var activateNodeByAddress;
     var highlightNodeByAddress;
     var resetAllNodes;
+    var highlightAllFlows;
 
     function chart(selection) {
 
@@ -513,6 +514,10 @@ d3.pathSankey = function() {
                 resetNodesAppearance('*[class*=node]');
             };
 
+            highlightAllFlows = function() {
+                highlightFlows('*[class*=passes]');
+            };
+
             /**
              * Highlight all the flows going through the given group
              * @param d
@@ -747,6 +752,9 @@ d3.pathSankey = function() {
     };
     chart.resetAllNodes = function(_) {
         return resetAllNodes();
+    };
+    chart.highlightAllFlows = function(_) {
+        return highlightAllFlows();
     };
 
     return chart;
