@@ -563,7 +563,7 @@ d3.pathSankey = function() {
                 if (currentlyActiveGroup && currentlyActiveGroup.id === uniqueGroupId) {
                     return;
                 }
-                highlightNodes('*[class*=node-' + uniqueGroupId + ']');
+                highlightNodes('*[class*=node-' + uniqueGroupId + '-]');
             }
 
             function mouseoutGroup(d) {
