@@ -121,6 +121,17 @@ d3.pathSankey = function() {
                             layer.sizeOut += flow.magnitude;
                             nodeGroup.sizeOut += flow.magnitude;
                             node.sizeOut += flow.magnitude;
+
+                            // Defining source and target of each node
+                            // (if several outputs for one node, it will be the last one)
+                            var from = p;
+                            var to = flow.path[i + 1];
+
+                            var source = nodes[from[0]].items[from[1]].items[from[2]];
+                            var target = nodes[to[0]].items[to[1]].items[to[2]];
+
+                            target.source = source;
+                            source.target = target;
                         }
                     });
                 });
@@ -184,12 +195,39 @@ d3.pathSankey = function() {
 
                         y += nodeGroupYPadding;
 
-                        group.items.forEach(function(node) {
+                        // Sorting nodes by group of source/target
+                        // The `concat()` is to make a copy of the array so that the order stays by nodeIdx otherwise
+                        var sortedItems = group.items.concat().sort(function(a, b) {
+                            var sortByType = 'target'; // 'source' or 'target'
+
+                            if (a[sortByType] && b[sortByType]) {
+                                if (a[sortByType].groupIdx - b[sortByType].groupIdx !== 0) {
+                                    return a[sortByType].groupIdx - b[sortByType].groupIdx;
+                                }
+                                else
+                                    return a.nodeIdx - b.nodeIdx;
+                            }
+                            else {
+                                return 0;
+                            }
+                        });
+
+                        sortedItems.forEach(function(node) {
                             node.x = group.x;
                             node.y = y;
                             y += node.size * yscale;
                             node.height = y - node.y;
                             y += nodeYSpacing;
+
+                            // All nodes in layer that are not the first one should have a source.
+                            if (node.layerIdx !== 0 && !node.source) {
+                                console.warn('node in column ' + node.layerIdx + ' has no source');
+                            }
+
+                            // All nodes in layer that are not the last one should have a target.
+                            if (node.layerIdx !== nodes.length - 1 && !node.target) {
+                                console.warn('node in column ' + node.layerIdx + ' has no target');
+                            }
 
                             // convert string colors and set a default color
                             // todo: where should this go?
@@ -258,15 +296,16 @@ d3.pathSankey = function() {
                         var h = flow.magnitude * yscale;
 
                         var source = nodes[from[0]].items[from[1]].items[from[2]];
+                        var targetGroup = nodes[to[0]].items[to[1]];
                         var target = nodes[to[0]].items[to[1]].items[to[2]];
 
                         var sourceY0 = source.filledOutY || source.y;
                         var sourceY1 = sourceY0 + h;
                         source.filledOutY = sourceY1;
 
-                        var targetY0 = target.filledInY || target.y;
+                        var targetY0 = targetGroup.filledInY || targetGroup.y + nodeGroupYPadding;
                         var targetY1 = targetY0 + h;
-                        target.filledInY = targetY1;
+                        targetGroup.filledInY = targetY1;
 
 
                         flowAreasData.push({
