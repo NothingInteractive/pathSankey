@@ -48,6 +48,8 @@ d3.pathSankey = function() {
 
     var tooltipDirection = 'e';
 
+    var verticalAlign = 'middle';
+
     // Functions that are going to be declared within the chart, but accessible from the outside to interact with it.
     var activateNodeByAddress;
     var highlightNodeByAddress;
@@ -173,7 +175,14 @@ d3.pathSankey = function() {
 
                 // use computed sizes to compute positions of all layers, groups and nodes
                 nodes.forEach(function(layer) {
-                    var y = 0.5 * (availableHeight - layer.totalHeight) + labelspace.top;
+                    var topShiftFactor = 0.5;
+                    if (verticalAlign === 'top') {
+                        topShiftFactor = 0;
+                    }
+                    else if (verticalAlign === 'bottom') {
+                        topShiftFactor = 1;
+                    }
+                    var y = topShiftFactor * (availableHeight - layer.totalHeight) + labelspace.top;
                     layer.y = y;
                     layer.items.forEach(function(group) {
 
@@ -730,6 +739,15 @@ d3.pathSankey = function() {
         }
         else {
             tooltipDirection = _;
+        }
+        return chart;
+    };
+    chart.verticalAlign = function(_) {
+        if (!arguments.length) {
+            return verticalAlign;
+        }
+        else {
+            verticalAlign = _;
         }
         return chart;
     };
