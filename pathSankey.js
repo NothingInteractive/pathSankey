@@ -50,6 +50,8 @@ d3.pathSankey = function() {
 
     var verticalAlign = 'middle';
 
+    var yScale; // not a d3.scale, just a number
+
     // Functions that are going to be declared within the chart, but accessible from the outside to interact with it.
     var activateNodeByAddress;
     var highlightNodeByAddress;
@@ -61,7 +63,6 @@ d3.pathSankey = function() {
         selection.each(function(data) {
 
             var parent = d3.select(this);
-            var yscale; // not a d3.scale, just a number
             var currentlyActiveNode = null;
             var currentlyActiveGroup = null;
 
@@ -143,19 +144,22 @@ d3.pathSankey = function() {
                     layer.numGroupSpacings = layer.items.length - 1;
                 });
 
-                // yscale calibrated to fill available height according to equation:
-                // availableHeight == size*yscale + group_spacing + group_padding + node_spacing
-                // (take worst case: smallest value)
-                yscale = d3.min(nodes, function(d) {
-                    return (availableHeight
-                        - d.numGroupSpacings * nodeGroupYSpacing
-                        - d.items.filter(function(group) { return group.items.length > 0}).length * nodeGroupYPadding * 2
-                        - d.numNodeSpacings * nodeYSpacing) / d.size;
-                });
+                if (!yScale) {
+                    // If not manually set:
+                    // yScale calibrated to fill available height according to equation:
+                    // availableHeight == size*yScale + group_spacing + group_padding + node_spacing
+                    // (take worst case: smallest value)
+                    yScale = d3.min(nodes, function(d) {
+                        return (availableHeight
+                            - d.numGroupSpacings * nodeGroupYSpacing
+                            - d.items.filter(function(group) { return group.items.length > 0}).length * nodeGroupYPadding * 2
+                            - d.numNodeSpacings * nodeYSpacing) / d.size;
+                    });
+                }
 
                 // compute layer heights by summing all sizes and spacings
                 nodes.forEach(function(layer) {
-                    layer.totalHeight = layer.size * yscale
+                    layer.totalHeight = layer.size * yScale
                         + layer.numGroupSpacings * nodeGroupYSpacing
                         + layer.items.filter(function(group) { return group.items.length > 0}).length * nodeGroupYPadding * 2
                         + layer.numNodeSpacings * nodeYSpacing;
@@ -187,7 +191,7 @@ d3.pathSankey = function() {
                         group.items.forEach(function(node) {
                             node.x = group.x;
                             node.y = y;
-                            y += node.size * yscale;
+                            y += node.size * yScale;
                             node.height = y - node.y;
                             y += nodeYSpacing;
 
@@ -255,7 +259,7 @@ d3.pathSankey = function() {
                         }
                         var from = flow.path[0];
                         var to = flow.path[1];
-                        var h = flow.magnitude * yscale;
+                        var h = flow.magnitude * yScale;
 
                         var source = nodes[from[0]].items[from[1]].items[from[2]];
                         var target = nodes[to[0]].items[to[1]].items[to[2]];
@@ -709,6 +713,15 @@ d3.pathSankey = function() {
         }
         else {
             verticalAlign = _;
+        }
+        return chart;
+    };
+    chart.yScale = function(_) {
+        if (!arguments.length) {
+            return yScale;
+        }
+        else {
+            yScale = _;
         }
         return chart;
     };
