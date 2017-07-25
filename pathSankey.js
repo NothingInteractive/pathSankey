@@ -204,15 +204,12 @@ d3.pathSankey = function() {
                         var sortedItems = group.items.concat().sort(function(a, b) {
                             var sortByType = 'target'; // 'source' or 'target'
 
-                            if (a[sortByType] && b[sortByType]) {
-                                if (a[sortByType].groupIdx - b[sortByType].groupIdx !== 0) {
-                                    return a[sortByType].groupIdx - b[sortByType].groupIdx;
-                                }
-                                else
-                                    return a.nodeIdx - b.nodeIdx;
+                            if (a[sortByType] && b[sortByType] &&
+                                a[sortByType].groupIdx - b[sortByType].groupIdx !== 0) {
+                                return a[sortByType].groupIdx - b[sortByType].groupIdx;
                             }
                             else {
-                                return 0;
+                                return a.nodeIdx - b.nodeIdx;
                             }
                         });
 
