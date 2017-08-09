@@ -233,6 +233,9 @@ d3.pathSankey = function() {
                             node.y = y;
                             y += node.size * yScale;
                             node.height = y - node.y;
+                            if (node.size <= 3 && group.size <= 10) {
+                                node.height = 0.2;
+                            }
                             y += nodeYSpacing;
 
                             // All nodes in layer that are not the first one should have a source.
