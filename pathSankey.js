@@ -141,7 +141,8 @@ d3.pathSankey = function() {
                     layer.numNodeSpacings = d3.sum(layer.items, function(g) {
                         return g.items.length - 1;
                     });
-                    layer.numGroupSpacings = layer.items.length - 1;
+                    layer.numGroups = layer.items.filter(function(group) { return group.items.length > 0}).length
+                    layer.numGroupSpacings = layer.numGroups - 1;
                 });
 
                 if (!yScale) {
@@ -152,7 +153,7 @@ d3.pathSankey = function() {
                     yScale = d3.min(nodes, function(d) {
                         return (availableHeight
                             - d.numGroupSpacings * nodeGroupYSpacing
-                            - d.items.filter(function(group) { return group.items.length > 0}).length * nodeGroupYPadding * 2
+                            - d.numGroups * nodeGroupYPadding * 2
                             - d.numNodeSpacings * nodeYSpacing) / d.size;
                     });
                 }
@@ -161,15 +162,29 @@ d3.pathSankey = function() {
                 nodes.forEach(function(layer) {
                     layer.totalHeight = layer.size * yScale
                         + layer.numGroupSpacings * nodeGroupYSpacing
-                        + layer.items.filter(function(group) { return group.items.length > 0}).length * nodeGroupYPadding * 2
+                        + layer.numGroups * nodeGroupYPadding * 2
                         + layer.numNodeSpacings * nodeYSpacing;
+
+                    if (verticalAlign === 'spread') {
+                        layer.totalHeight = availableHeight;
+
+                        var totalFreeSpace = layer.totalHeight -
+                            (layer.size * yScale) -
+                            layer.numGroups * nodeGroupYPadding * 2 -
+                            layer.numNodeSpacings * nodeYSpacing;
+
+                        layer.nodeGroupYSpacing = totalFreeSpace / layer.numGroupSpacings;
+                    }
+                    else {
+                        layer.nodeGroupYSpacing = nodeGroupYSpacing;
+                    }
                 });
 
 
                 // use computed sizes to compute positions of all layers, groups and nodes
                 nodes.forEach(function(layer) {
                     var topShiftFactor = 0.5;
-                    if (verticalAlign === 'top') {
+                    if (verticalAlign === 'top' || verticalAlign === 'spread') {
                         topShiftFactor = 0;
                     }
                     else if (verticalAlign === 'bottom') {
@@ -209,10 +224,10 @@ d3.pathSankey = function() {
                         y += nodeGroupYPadding;
                         group.height = y - group.y;
 
-                        y += nodeGroupYSpacing;
+                        y += layer.nodeGroupYSpacing;
 
                     });
-                    y -= nodeGroupYSpacing;
+                    y -= layer.nodeGroupYSpacing;
                 });
 
 
@@ -752,4 +767,3 @@ d3.pathSankey = function() {
     return chart;
 };
 
- 
