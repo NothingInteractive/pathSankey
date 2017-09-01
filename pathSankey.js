@@ -54,9 +54,12 @@ d3.pathSankey = function() {
 
     // Functions that are going to be declared within the chart, but accessible from the outside to interact with it.
     var activateNodeByAddress;
-    var highlightNodeByAddress;
+    var fadeAllNodesExcept;
+    var highlightFlowsByUniqueId;
     var resetAllNodes;
     var highlightAllFlows;
+    var fadeAllFlows;
+    var resetAllFlows;
 
     function chart(selection) {
 
@@ -441,11 +444,20 @@ d3.pathSankey = function() {
                     });
             }
 
+            function fadeNodes(selector) {
+                parent.selectAll(selector)
+                    .style('fill', function(node) {
+                        return node.color;
+                    })
+                    .style('fill-opacity', 0.04);
+            }
+
             function resetNodesAppearance(selector) {
                 parent.selectAll(selector)
                     .style('fill', function(node) {
                         return node.color;
-                    });
+                    })
+                    .style('fill-opacity', null);
             }
 
 
@@ -491,12 +503,28 @@ d3.pathSankey = function() {
                 activateNode(node);
             };
 
-            highlightNodeByAddress = function(nodeAddress) {
-                selectedNodeAddress = nodeAddress;
-                var node = data.nodes[selectedNodeAddress[0]]
-                    .items[selectedNodeAddress[1]]
-                    .items[selectedNodeAddress[2]];
-                highlightNodes('.node-' + node.uniqueId);
+            /**
+             * @param {string[]} nodesUniqueId
+             */
+            highlightFlowsByUniqueId = function(nodesUniqueId) {
+                fadeFlows('*[class*=passes]');
+                nodesUniqueId.forEach(function(nodeUniqueId) {
+                    highlightFlows('.passes-' + nodeUniqueId);
+                });
+            };
+
+            fadeAllNodes = function() {
+                fadeNodes('*[class*=node]:not(.node-group):not(.node-layer');
+            };
+
+            /**
+             * @param {string[]} nodesUniqueId
+             */
+            fadeAllNodesExcept = function(nodesUniqueId) {
+                fadeAllNodes();
+                nodesUniqueId.forEach(function(nodeUniqueId) {
+                    resetNodesAppearance('.node-' + nodeUniqueId);
+                });
             };
 
             resetAllNodes = function() {
@@ -505,6 +533,14 @@ d3.pathSankey = function() {
 
             highlightAllFlows = function() {
                 highlightFlows('*[class*=passes]');
+            };
+
+            fadeAllFlows = function() {
+                fadeFlows('*[class*=passes]');
+            };
+
+            resetAllFlows = function() {
+                resetFlowsAppearance('*[class*=passes]');
             };
 
             /**
@@ -749,12 +785,20 @@ d3.pathSankey = function() {
             return activateNodeByAddress(_);
         }
     };
-    chart.highlightNodeByAddress = function(_) {
+    chart.fadeAllNodesExcept = function(_) {
         if (!arguments.length) {
-            return highlightNodeByAddress;
+            return fadeAllNodesExcept;
         }
         else {
-            return highlightNodeByAddress(_);
+            return fadeAllNodesExcept(_);
+        }
+    };
+    chart.highlightFlowsByUniqueId = function(_) {
+        if (!arguments.length) {
+            return highlightFlowsByUniqueId;
+        }
+        else {
+            return highlightFlowsByUniqueId(_);
         }
     };
     chart.resetAllNodes = function(_) {
@@ -762,6 +806,12 @@ d3.pathSankey = function() {
     };
     chart.highlightAllFlows = function(_) {
         return highlightAllFlows();
+    };
+    chart.fadeAllFlows = function(_) {
+        return fadeAllFlows();
+    };
+    chart.resetAllFlows = function(_) {
+        return resetAllFlows();
     };
 
     return chart;
