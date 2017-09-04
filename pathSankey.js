@@ -60,6 +60,7 @@ d3.pathSankey = function() {
     var highlightAllFlows;
     var fadeAllFlows;
     var resetAllFlows;
+    var highlightPortionOfGroup;
 
     function chart(selection) {
 
@@ -543,6 +544,11 @@ d3.pathSankey = function() {
                 resetFlowsAppearance('*[class*=passes]');
             };
 
+            highlightPortionOfGroup = function(layerIdx, groupIdx, count) {
+                console.log(layerIdx, groupIdx, count);
+                // TODO: implement the function so that a portion of the corresponding group gets highlighted.
+            };
+
             /**
              * Highlight all the flows going through the given group
              * @param d
@@ -799,6 +805,14 @@ d3.pathSankey = function() {
         }
         else {
             return highlightFlowsByUniqueId(_);
+        }
+    };
+    chart.highlightPortionOfGroup = function(layerIdx, groupIdx, count) {
+        if (arguments.length !== 3) {
+            return highlightPortionOfGroup;
+        }
+        else {
+            return highlightPortionOfGroup(layerIdx, groupIdx, count);
         }
     };
     chart.resetAllNodes = function(_) {
