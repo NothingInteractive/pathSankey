@@ -144,7 +144,7 @@ d3.pathSankey = function() {
                     layer.numNodeSpacings = d3.sum(layer.items, function(g) {
                         return g.items.length - 1;
                     });
-                    layer.numGroups = layer.items.filter(function(group) { return group.items.length > 0}).length
+                    layer.numGroups = layer.items.filter(function(group) { return group.items.length > 0}).length;
                     layer.numGroupSpacings = layer.numGroups - 1;
                 });
 
