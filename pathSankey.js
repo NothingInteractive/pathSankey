@@ -61,6 +61,7 @@ d3.pathSankey = function() {
     var fadeAllFlows;
     var resetAllFlows;
     var highlightPortionOfGroup;
+    var resetAllPortions;
 
     function chart(selection) {
 
@@ -207,6 +208,8 @@ d3.pathSankey = function() {
 
                         y += nodeGroupYPadding;
 
+                        group.innerY = y;
+
                         group.items.forEach(function(node) {
                             node.x = group.x;
                             node.y = y;
@@ -225,6 +228,10 @@ d3.pathSankey = function() {
                         });
 
                         y -= nodeYSpacing;
+
+                        // TODO: innerHeight is actually not used, but might be in the future if the client want to have the portions highlighted from the bottom of the groups
+                        group.innerHeight = y - group.innerY;
+
                         y += nodeGroupYPadding;
                         group.height = y - group.y;
 
@@ -440,25 +447,23 @@ d3.pathSankey = function() {
 
             function highlightNodes(selector) {
                 parent.selectAll(selector)
-                    .style('fill', function(node) {
-                        return node.color.brighter(0.5);
-                    });
+                    .classed('node--highlighted', true);
+            }
+
+            function unhighlightNodes(selector) {
+                parent.selectAll(selector)
+                    .classed('node--highlighted', false);
             }
 
             function fadeNodes(selector) {
                 parent.selectAll(selector)
-                    .style('fill', function(node) {
-                        return node.color;
-                    })
-                    .style('fill-opacity', 0.04);
+                    .classed('node--faded', true);
             }
 
             function resetNodesAppearance(selector) {
                 parent.selectAll(selector)
-                    .style('fill', function(node) {
-                        return node.color;
-                    })
-                    .style('fill-opacity', null);
+                    .classed('node--highlighted', false)
+                    .classed('node--faded', false);
             }
 
 
@@ -529,6 +534,7 @@ d3.pathSankey = function() {
             };
 
             resetAllNodes = function() {
+                resetAllPortions();
                 resetNodesAppearance('*[class*=node]');
             };
 
@@ -545,8 +551,15 @@ d3.pathSankey = function() {
             };
 
             highlightPortionOfGroup = function(layerIdx, groupIdx, count) {
-                console.log(layerIdx, groupIdx, count);
-                // TODO: implement the function so that a portion of the corresponding group gets highlighted.
+                nodeGroups.select('#group-portion-' + layerIdx + '-' + groupIdx)
+                    .attr('height', function() {
+                            return count * yScale;
+                        });
+            };
+
+            resetAllPortions = function() {
+                parent.selectAll('.group-portion')
+                    .attr('height', 0);
             };
 
             /**
@@ -557,18 +570,21 @@ d3.pathSankey = function() {
                 // Taking layer and group information from first node as it is the same for every node in the group.
                 var uniqueGroupId = d.items[0].layerIdx + '-' + d.items[0].groupIdx;
 
+                resetAllPortions();
+                resetAllNodes();
+
                 if (currentlyActiveGroup && currentlyActiveGroup.id === uniqueGroupId) { // Deactivating
                     if (onGroupDeselected) {
                         onGroupDeselected(d);
                     }
 
-                    resetFlowsAppearance('*[class*=passes]');
+                    resetAllFlows();
 
                     currentlyActiveGroup = undefined;
                     selectedNodeAddress = undefined;
                 }
                 else { // Activating
-                    fadeFlows('*[class*=passes]');
+                    fadeAllFlows();
                     highlightFlows('*[class*=passes-' + uniqueGroupId + ']');
                     resetNodesAppearance('*[class*=node-' + uniqueGroupId + ']');
                     currentlyActiveGroup = {
@@ -604,7 +620,7 @@ d3.pathSankey = function() {
                 if (currentlyActiveGroup && currentlyActiveGroup.id === uniqueGroupId) {
                     return;
                 }
-                resetNodesAppearance('*[class*=node-' + uniqueGroupId + ']');
+                unhighlightNodes('*[class*=node-' + uniqueGroupId + ']');
             }
 
             var nodeElements = nodeGroups.selectAll('rect.node').data(prop('items'));
@@ -624,9 +640,30 @@ d3.pathSankey = function() {
                 .on('click', activateNode); // But it cannot be clicked because the group is over it.
             nodeElements.exit().remove();
 
-            nodeGroups.append('rect').classed('node-group', true);
+            nodeGroups
+                .attr('id', function(d) {
+                    if (d.items && d.items.length > 0) {
+                        return 'group-' + d.items[0].layerIdx + '-' + d.items[0].groupIdx;
+                    }
+                });
 
-            nodeGroups.selectAll('g.node-group > rect')
+            nodeGroups.append('rect')
+                .classed('group-portion', true)
+                .attr('id', function(d) {
+                    if (d.items && d.items.length > 0) {
+                        return 'group-portion-' + d.items[0].layerIdx + '-' + d.items[0].groupIdx;
+                    }
+                })
+                .attr('x', prop('x'))
+                .attr('y', prop('innerY'))
+                .attr('width', nodeWidth)
+                .attr('height', 0)
+                .style('fill', 'white')
+                .style('fill-opacity', 0.5);
+
+            // This rectangle is there only to have the overlay label being centered in the group.
+            nodeGroups.append('rect')
+                .classed('node-group', true)
                 .attr('x', prop('x'))
                 .attr('y', prop('y'))
                 .attr('width', nodeWidth)
@@ -826,6 +863,9 @@ d3.pathSankey = function() {
     };
     chart.resetAllFlows = function(_) {
         return resetAllFlows();
+    };
+    chart.resetAllPortions = function(_) {
+        return resetAllPortions();
     };
 
     return chart;
