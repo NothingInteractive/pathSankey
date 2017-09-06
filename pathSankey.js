@@ -1,5 +1,10 @@
 d3.pathSankey = function() {
 
+    /**
+     * Layer (column), group and node IDs
+     * @typedef {[number, number, number]} NodeAddress
+     */
+
     /*
      Split SVG text into several <tspan> where
      string has newline character \n
@@ -55,7 +60,7 @@ d3.pathSankey = function() {
     // Functions that are going to be declared within the chart, but accessible from the outside to interact with it.
     var activateNodeByAddress;
     var fadeAllNodesExcept;
-    var highlightFlowsByUniqueId;
+    var highlightFlowsGoingThroughNodes;
     var resetAllNodes;
     var highlightAllFlows;
     var fadeAllFlows;
@@ -466,6 +471,31 @@ d3.pathSankey = function() {
                     .classed('node--faded', false);
             }
 
+            /**
+             * @param {NodeAddress} nodeAddress
+             * @return {string}
+             */
+            function getUniqueIdFromAddress(nodeAddress) {
+                return nodeAddress.join('-');
+            }
+
+            /**
+             * Returns all the nodes in the flows that are going through a specific group of nodes
+             * @param {object} group The data of the group of nodes
+             * @return {NodeAddress[]}
+             */
+            function getAllNodesRelatedToGroup(group) {
+                var matchingNodes = [];
+
+                data.flows.forEach(function(flow) {
+                    if (flow.path[group.items[0].layerIdx][1] === group.items[0].groupIdx) {
+                        matchingNodes = matchingNodes.concat(flow.path);
+                    }
+                });
+
+                return matchingNodes;
+            }
+
 
             /**
              * Highlight all the flows going through the given node
@@ -501,6 +531,9 @@ d3.pathSankey = function() {
                 }
             }
 
+            /**
+             * @param {NodeAddress} nodeAddress
+             */
             activateNodeByAddress = function(nodeAddress) {
                 selectedNodeAddress = nodeAddress;
                 var node = data.nodes[selectedNodeAddress[0]]
@@ -510,12 +543,12 @@ d3.pathSankey = function() {
             };
 
             /**
-             * @param {string[]} nodesUniqueId
+             * @param {NodeAddress[]} nodeAddresses
              */
-            highlightFlowsByUniqueId = function(nodesUniqueId) {
+            highlightFlowsGoingThroughNodes = function(nodeAddresses) {
                 fadeFlows('*[class*=passes]');
-                nodesUniqueId.forEach(function(nodeUniqueId) {
-                    highlightFlows('.passes-' + nodeUniqueId);
+                nodeAddresses.forEach(function(nodeAddress) {
+                    highlightFlows('.passes-' + getUniqueIdFromAddress(nodeAddress));
                 });
             };
 
@@ -524,12 +557,12 @@ d3.pathSankey = function() {
             };
 
             /**
-             * @param {string[]} nodesUniqueId
+             * @param {NodeAddress[]} nodeAddresses
              */
-            fadeAllNodesExcept = function(nodesUniqueId) {
+            fadeAllNodesExcept = function(nodeAddresses) {
                 fadeAllNodes();
-                nodesUniqueId.forEach(function(nodeUniqueId) {
-                    resetNodesAppearance('.node-' + nodeUniqueId);
+                nodeAddresses.forEach(function(nodeAddress) {
+                    resetNodesAppearance('.node-' + getUniqueIdFromAddress(nodeAddress));
                 });
             };
 
@@ -585,6 +618,7 @@ d3.pathSankey = function() {
                 }
                 else { // Activating
                     fadeAllFlows();
+                    fadeAllNodesExcept(getAllNodesRelatedToGroup(d));
                     highlightFlows('*[class*=passes-' + uniqueGroupId + ']');
                     resetNodesAppearance('*[class*=node-' + uniqueGroupId + ']');
                     currentlyActiveGroup = {
@@ -836,12 +870,12 @@ d3.pathSankey = function() {
             return fadeAllNodesExcept(_);
         }
     };
-    chart.highlightFlowsByUniqueId = function(_) {
+    chart.highlightFlowsGoingThroughNodes = function(_) {
         if (!arguments.length) {
-            return highlightFlowsByUniqueId;
+            return highlightFlowsGoingThroughNodes;
         }
         else {
-            return highlightFlowsByUniqueId(_);
+            return highlightFlowsGoingThroughNodes(_);
         }
     };
     chart.highlightPortionOfGroup = function(layerIdx, groupIdx, count) {
