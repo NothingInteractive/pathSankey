@@ -619,8 +619,8 @@ d3.pathSankey = function() {
                 else { // Activating
                     fadeAllFlows();
                     fadeAllNodesExcept(getAllNodesRelatedToGroup(d));
-                    highlightFlows('*[class*=passes-' + uniqueGroupId + ']');
-                    resetNodesAppearance('*[class*=node-' + uniqueGroupId + ']');
+                    highlightFlows('*[class*=passes-' + uniqueGroupId + '-]');
+                    resetNodesAppearance('*[class*=node-' + uniqueGroupId + '-]');
                     currentlyActiveGroup = {
                         id: uniqueGroupId
                     };
