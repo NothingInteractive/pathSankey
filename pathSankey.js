@@ -553,7 +553,7 @@ d3.pathSankey = function() {
             };
 
             fadeAllNodes = function() {
-                fadeNodes('*[class*=node]:not(.node-group):not(.node-layer');
+                fadeNodes('*[class*=node]:not(.node-group):not(.node-layer)');
             };
 
             /**
@@ -583,11 +583,21 @@ d3.pathSankey = function() {
                 resetFlowsAppearance('*[class*=passes]');
             };
 
+            /**
+             * Highlight a part of a group by actually fading what should not be highlighted.
+             * @param layerIdx
+             * @param groupIdx
+             * @param count
+             */
             highlightPortionOfGroup = function(layerIdx, groupIdx, count) {
                 nodeGroups.select('#group-portion-' + layerIdx + '-' + groupIdx)
-                    .attr('height', function() {
-                            return count * yScale;
-                        });
+                    .attr('height', function(d) {
+                        return d.innerHeight - (count * yScale);
+                    })
+                    .attr('y', function(d) {
+                        return d.innerY + (count * yScale);
+                    });
+
             };
 
             resetAllPortions = function() {
@@ -693,7 +703,7 @@ d3.pathSankey = function() {
                 .attr('width', nodeWidth)
                 .attr('height', 0)
                 .style('fill', 'white')
-                .style('fill-opacity', 0.5);
+                .style('fill-opacity', 0.8);
 
             // This rectangle is there only to have the overlay label being centered in the group.
             nodeGroups.append('rect')
