@@ -465,6 +465,10 @@ d3.pathSankey = function() {
                     .classed('node--faded', true);
             }
 
+            function fadeAllNodes() {
+                fadeNodes('*[class*=node]:not(.node-group):not(.node-layer)');
+            }
+
             function resetNodesAppearance(selector) {
                 parent.selectAll(selector)
                     .classed('node--highlighted', false)
@@ -550,10 +554,6 @@ d3.pathSankey = function() {
                 nodeAddresses.forEach(function(nodeAddress) {
                     highlightFlows('.passes-' + getUniqueIdFromAddress(nodeAddress));
                 });
-            };
-
-            fadeAllNodes = function() {
-                fadeNodes('*[class*=node]:not(.node-group):not(.node-layer)');
             };
 
             /**
